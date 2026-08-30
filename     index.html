@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffcf5a">
+<title>Türkisch mit Sternen</title>
+<style>
+:root{--bg:#fff8e8;--card:#fff;--ink:#253047;--accent:#ffcf5a;--green:#78d98b;--blue:#7bbcff;--pink:#ff9e9e;--soft:#ffe48b;--muted:#6a7486}
+*{box-sizing:border-box} body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);margin:0;color:var(--ink)}
+header{position:sticky;top:0;z-index:10;background:var(--accent);padding:14px 12px;box-shadow:0 3px 14px #0002} h1{margin:0;text-align:center;font-size:24px}
+.topline{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:8px;font-weight:700}.wrap{max-width:860px;margin:auto;padding:14px}
+.panel,.card{background:var(--card);border-radius:22px;padding:16px;margin:14px 0;box-shadow:0 5px 18px #0002}.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+button,select{border:0;border-radius:16px;padding:13px 14px;font-size:16px;font-weight:700;background:#fff;box-shadow:0 3px 10px #0002}button:active{transform:scale(.98)}
+.profile{background:var(--soft)}.active{outline:4px solid #5ebd73}.primary{background:var(--green)}.secondary{background:var(--blue)}.danger{background:var(--pink)}.ghost{background:#f3f5f8}
+.section-title{margin:0 0 10px}.topic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.topic-btn{width:100%;min-height:74px}
+.learn-card{text-align:center}.emoji{font-size:64px}.word{font-size:38px;font-weight:800;color:#df4b4b}.translation{font-size:22px;margin:7px 0}.example{font-size:17px;color:var(--muted);min-height:22px}.badge{display:inline-block;background:#eef3ff;padding:6px 10px;border-radius:999px;font-size:13px;font-weight:700}
+.progress{height:12px;background:#eee;border-radius:999px;overflow:hidden}.progress>div{height:100%;background:#5ebd73;width:0}.small{font-size:13px;color:var(--muted)}
+.quiz button{display:block;width:100%;margin:8px 0}.hidden{display:none!important}.alphabet{display:grid;grid-template-columns:repeat(auto-fit,minmax(58px,1fr));gap:8px}.letter{padding:12px 8px;background:#fff;border-radius:14px;box-shadow:0 2px 8px #0001;text-align:center;font-weight:800}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.stat{background:#f7f8fb;border-radius:15px;padding:10px}.footer-note{text-align:center;color:var(--muted);font-size:12px;padding:20px 5px}
+@media(max-width:520px){.word{font-size:34px}.emoji{font-size:58px}.stat-grid{grid-template-columns:1fr 1fr}.wrap{padding:10px}}
+</style>
+</head>
+<body>
+<header>
+<h1>⭐ Türkisch mit Sternen</h1>
+<div class="topline"><span id="profileName">Profil: Derya</span><span>⭐ <span id="stars">0</span></span><span>Level <span id="levelNo">1</span></span></div>
+</header>
+<div class="wrap">
+  <div class="panel">
+    <h3 class="section-title">Profil</h3>
+    <div class="row">
+      <button id="deryaBtn" class="profile">🧸 Derya</button>
+      <button id="elifBtn" class="profile">🌟 Elif</button>
+      <button id="adultBtn" class="profile">🧑 Erwachsene</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <select id="levelSelect"></select>
+      <select id="modeSelect"><option value="learn">Lernen</option><option value="quiz">Quiz</option><option value="alphabet">Alphabet</option><option value="review">Wiederholen</option></select>
+    </div>
+  </div>
+
+  <div id="topicsPanel" class="panel">
+    <h3 class="section-title">Themen</h3>
+    <div id="topicGrid" class="topic-grid"></div>
+  </div>
+
+  <div id="learnPanel" class="card learn-card">
+    <div class="badge" id="levelBadge"></div>
+    <div class="emoji" id="emoji">👋</div>
+    <div class="word" id="tr">Merhaba</div>
+    <div class="translation" id="de">Hallo</div>
+    <div class="example" id="example"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="primary" id="speakBtn">🔊 Anhören</button>
+      <button class="danger" id="recordBtn">🎤 Nachsprechen</button>
+      <button class="secondary" id="nextBtn">➡️ Weiter</button>
+    </div>
+    <audio id="playback" controls class="hidden" style="width:100%;margin-top:12px"></audio>
+    <p id="msg"></p>
+    <div class="progress"><div id="progressBar"></div></div>
+    <div class="small" id="counter"></div>
+  </div>
+
+  <div id="quizPanel" class="card quiz hidden">
+    <h3>🎯 Quiz</h3><p id="quizQuestion"></p><div id="quizAnswers"></div><p id="quizMsg"></p>
+  </div>
+
+  <div id="alphabetPanel" class="card hidden">
+    <h3>🔤 Türkisches Alphabet</h3><p class="small">Tippe auf einen Buchstaben zum Anhören.</p><div id="alphabetGrid" class="alphabet"></div>
+  </div>
+
+  <div id="statsPanel" class="panel">
+    <h3 class="section-title">Fortschritt</h3>
+    <div class="stat-grid"><div class="stat"><b id="seenStat">0</b><br><span class="small">gelernt</span></div><div class="stat"><b id="correctStat">0</b><br><span class="small">richtig</span></div><div class="stat"><b id="wrongStat">0</b><br><span class="small">wiederholen</span></div></div>
+    <div class="row" style="margin-top:10px"><button class="ghost" id="reviewBtn">🔁 Fehler wiederholen</button><button class="ghost" id="resetBtn">♻️ Fortschritt zurücksetzen</button></div>
+  </div>
+
+  <div class="footer-note">Offline-freundlich · Fortschritt bleibt nur auf diesem Gerät gespeichert · Ausspracheaufnahme benötigt Mikrofonfreigabe.</div>
+</div>
+<script>
+const ALPHABET=[['A','a'],['B','be'],['C','ce'],['Ç','çe'],['D','de'],['E','e'],['F','fe'],['G','ge'],['Ğ','yumuşak ge'],['H','he'],['I','ı'],['İ','i'],['J','je'],['K','ke'],['L','le'],['M','me'],['N','ne'],['O','o'],['Ö','ö'],['P','pe'],['R','re'],['S','se'],['Ş','şe'],['T','te'],['U','u'],['Ü','ü'],['V','ve'],['Y','ye'],['Z','ze']];
+const L=(level,topic,emoji,tr,de,ex='')=>({level,topic,emoji,tr,de,ex});
+const DATA=[
+L(1,'Begrüßung','👋','Merhaba','Hallo'),L(1,'Begrüßung','😊','Nasılsın?','Wie geht es dir?'),L(1,'Begrüßung','🙏','Teşekkürler','Danke'),L(1,'Begrüßung','👋','Güle güle','Tschüss'),L(1,'Begrüßung','☀️','Günaydın','Guten Morgen'),L(1,'Begrüßung','🌙','İyi geceler','Gute Nacht'),
+L(1,'Zahlen','1️⃣','Bir','Eins'),L(1,'Zahlen','2️⃣','İki','Zwei'),L(1,'Zahlen','3️⃣','Üç','Drei'),L(1,'Zahlen','4️⃣','Dört','Vier'),L(1,'Zahlen','5️⃣','Beş','Fünf'),L(1,'Zahlen','6️⃣','Altı','Sechs'),L(1,'Zahlen','7️⃣','Yedi','Sieben'),L(1,'Zahlen','8️⃣','Sekiz','Acht'),L(1,'Zahlen','9️⃣','Dokuz','Neun'),L(1,'Zahlen','🔟','On','Zehn'),
+L(1,'Farben','🔴','Kırmızı','Rot'),L(1,'Farben','🔵','Mavi','Blau'),L(1,'Farben','🟢','Yeşil','Grün'),L(1,'Farben','🟡','Sarı','Gelb'),L(1,'Farben','⚫','Siyah','Schwarz'),L(1,'Farben','⚪','Beyaz','Weiß'),L(1,'Farben','🟣','Mor','Lila'),L(1,'Farben','🟠','Turuncu','Orange'),
+L(1,'Tiere','🐱','Kedi','Katze'),L(1,'Tiere','🐶','Köpek','Hund'),L(1,'Tiere','🐦','Kuş','Vogel'),L(1,'Tiere','🐟','Balık','Fisch'),L(1,'Tiere','🐰','Tavşan','Kaninchen'),L(1,'Tiere','🦁','Aslan','Löwe'),
+L(1,'Familie','👩','Anne','Mama'),L(1,'Familie','👨','Baba','Papa'),L(1,'Familie','👧','Kız','Mädchen'),L(1,'Familie','👦','Erkek çocuk','Junge'),L(1,'Familie','👵','Büyükanne','Oma'),L(1,'Familie','👴','Büyükbaba','Opa'),
+L(1,'Essen','🍎','Elma','Apfel'),L(1,'Essen','🍞','Ekmek','Brot'),L(1,'Essen','💧','Su','Wasser'),L(1,'Essen','🥛','Süt','Milch'),L(1,'Essen','🍌','Muz','Banane'),L(1,'Essen','🍓','Çilek','Erdbeere'),
+L(2,'Körper','👁️','Göz','Auge'),L(2,'Körper','👃','Burun','Nase'),L(2,'Körper','👄','Ağız','Mund'),L(2,'Körper','✋','El','Hand'),L(2,'Körper','🦶','Ayak','Fuß'),L(2,'Körper','🦷','Diş','Zahn'),
+L(2,'Schule','🏫','Okul','Schule'),L(2,'Schule','📚','Kitap','Buch'),L(2,'Schule','✏️','Kalem','Stift'),L(2,'Schule','🎒','Çanta','Tasche'),L(2,'Schule','🪑','Sandalye','Stuhl'),L(2,'Schule','🧑‍🏫','Öğretmen','Lehrer/in'),
+L(2,'Zuhause','🏠','Ev','Haus'),L(2,'Zuhause','🚪','Kapı','Tür'),L(2,'Zuhause','🪟','Pencere','Fenster'),L(2,'Zuhause','🛏️','Yatak','Bett'),L(2,'Zuhause','🪑','Masa','Tisch'),L(2,'Zuhause','💡','Lamba','Lampe'),
+L(2,'Zeit','🕐','Saat','Uhr'),L(2,'Zeit','📅','Bugün','Heute'),L(2,'Zeit','➡️','Yarın','Morgen'),L(2,'Zeit','⬅️','Dün','Gestern'),L(2,'Zeit','🌅','Sabah','Morgen/Vormittag'),L(2,'Zeit','🌃','Akşam','Abend'),
+L(2,'Gefühle','😊','Mutlu','Glücklich'),L(2,'Gefühle','😢','Üzgün','Traurig'),L(2,'Gefühle','😠','Kızgın','Wütend'),L(2,'Gefühle','😴','Yorgun','Müde'),L(2,'Gefühle','😨','Korkmuş','Ängstlich'),L(2,'Gefühle','🤩','Heyecanlı','Aufgeregt'),
+L(3,'Verben','🏃','Gitmek','Gehen'),L(3,'Verben','🍽️','Yemek','Essen'),L(3,'Verben','🥤','İçmek','Trinken'),L(3,'Verben','📖','Okumak','Lesen'),L(3,'Verben','✍️','Yazmak','Schreiben'),L(3,'Verben','🗣️','Konuşmak','Sprechen'),L(3,'Verben','👂','Dinlemek','Zuhören'),L(3,'Verben','👀','Görmek','Sehen'),
+L(3,'Sätze','🙂','Benim adım ...','Mein Name ist ...','Benim adım Elif.'),L(3,'Sätze','❓','Senin adın ne?','Wie heißt du?'),L(3,'Sätze','💧','Su istiyorum.','Ich möchte Wasser.'),L(3,'Sätze','🐱','Bu bir kedi.','Das ist eine Katze.'),L(3,'Sätze','😊','Ben iyiyim.','Mir geht es gut.'),L(3,'Sätze','🏫','Ben okula gidiyorum.','Ich gehe zur Schule.'),L(3,'Sätze','🍎','Elma seviyorum.','Ich mag Äpfel.'),L(3,'Sätze','❌','Bilmiyorum.','Ich weiß es nicht.'),
+L(3,'Fragen','📍','Nerede?','Wo?'),L(3,'Fragen','👤','Kim?','Wer?'),L(3,'Fragen','❔','Ne?','Was?'),L(3,'Fragen','🕒','Ne zaman?','Wann?'),L(3,'Fragen','💰','Ne kadar?','Wie viel?'),L(3,'Fragen','🤔','Neden?','Warum?'),L(3,'Fragen','🛠️','Nasıl?','Wie?'),
+L(4,'Restaurant','🍽️','Menü lütfen.','Die Speisekarte bitte.'),L(4,'Restaurant','💧','Bir su alabilir miyim?','Kann ich ein Wasser bekommen?'),L(4,'Restaurant','🍲','Bu nedir?','Was ist das?'),L(4,'Restaurant','💳','Hesap lütfen.','Die Rechnung bitte.'),L(4,'Restaurant','🚫','Et yemiyorum.','Ich esse kein Fleisch.'),L(4,'Restaurant','👍','Çok lezzetli.','Sehr lecker.'),
+L(4,'Einkaufen','💰','Bu ne kadar?','Wie viel kostet das?'),L(4,'Einkaufen','👕','Bunu denemek istiyorum.','Ich möchte das anprobieren.'),L(4,'Einkaufen','📏','Daha büyük var mı?','Gibt es das größer?'),L(4,'Einkaufen','🧾','Fiş alabilir miyim?','Kann ich den Kassenbon bekommen?'),L(4,'Einkaufen','💳','Kartla ödeyebilir miyim?','Kann ich mit Karte zahlen?'),
+L(4,'Reisen','✈️','Havaalanı nerede?','Wo ist der Flughafen?'),L(4,'Reisen','🚕','Taksi çağırabilir misiniz?','Können Sie ein Taxi rufen?'),L(4,'Reisen','🏨','Rezervasyonum var.','Ich habe eine Reservierung.'),L(4,'Reisen','🗺️','Bu adres nerede?','Wo ist diese Adresse?'),L(4,'Reisen','🚌','Otobüs ne zaman geliyor?','Wann kommt der Bus?'),
+L(4,'Gesundheit','🩺','Doktora ihtiyacım var.','Ich brauche einen Arzt.'),L(4,'Gesundheit','🤕','Başım ağrıyor.','Ich habe Kopfschmerzen.'),L(4,'Gesundheit','🌡️','Ateşim var.','Ich habe Fieber.'),L(4,'Gesundheit','💊','İlaç kullanıyorum.','Ich nehme Medikamente.'),L(4,'Gesundheit','🚑','Acil yardım!','Notfall!'),
+L(5,'Grammatik','👤','Ben','Ich'),L(5,'Grammatik','👤','Sen','Du'),L(5,'Grammatik','👤','O','Er/Sie'),L(5,'Grammatik','👥','Biz','Wir'),L(5,'Grammatik','👥','Siz','Ihr/Sie'),L(5,'Grammatik','👥','Onlar','Sie'),L(5,'Grammatik','➕','-ler / -lar','Pluralendung'),L(5,'Grammatik','📍','-de / -da','in/an'),L(5,'Grammatik','➡️','-e / -a','zu/nach'),L(5,'Grammatik','⬅️','-den / -dan','aus/von'),
+L(5,'Zeitformen','⏱️','Geliyorum.','Ich komme gerade.'),L(5,'Zeitformen','✅','Geldim.','Ich bin gekommen.'),L(5,'Zeitformen','🔮','Geleceğim.','Ich werde kommen.'),L(5,'Zeitformen','📚','Okuyorum.','Ich lese gerade.'),L(5,'Zeitformen','✅','Okudum.','Ich habe gelesen.'),L(5,'Zeitformen','🔮','Okuyacağım.','Ich werde lesen.'),
+L(6,'Alltag','💼','Bugün çok işim var.','Ich habe heute viel zu tun.'),L(6,'Alltag','📞','Seni sonra arayacağım.','Ich rufe dich später an.'),L(6,'Alltag','🚗','Trafik çok yoğun.','Der Verkehr ist sehr dicht.'),L(6,'Alltag','☔','Bugün hava yağmurlu.','Heute ist es regnerisch.'),L(6,'Alltag','🕒','Biraz geç kalacağım.','Ich werde etwas zu spät kommen.'),
+L(6,'Meinung','💬','Bence bu iyi bir fikir.','Ich denke, das ist eine gute Idee.'),L(6,'Meinung','🤷','Emin değilim.','Ich bin nicht sicher.'),L(6,'Meinung','👍','Sana katılıyorum.','Ich stimme dir zu.'),L(6,'Meinung','👎','Aynı fikirde değilim.','Ich bin nicht derselben Meinung.'),L(6,'Meinung','🧠','Bunu düşünmem gerekiyor.','Ich muss darüber nachdenken.'),
+L(7,'Arbeit','🏢','Toplantı saat kaçta?','Um wie viel Uhr ist das Meeting?'),L(7,'Arbeit','📧','E-postayı gönderdim.','Ich habe die E-Mail geschickt.'),L(7,'Arbeit','📊','Rapor hazır mı?','Ist der Bericht fertig?'),L(7,'Arbeit','🤝','Yardımınız için teşekkür ederim.','Vielen Dank für Ihre Hilfe.'),L(7,'Arbeit','📅','Randevuyu erteleyebilir miyiz?','Können wir den Termin verschieben?'),
+L(7,'Behörden','🪪','Kimliğimi göstereyim mi?','Soll ich meinen Ausweis zeigen?'),L(7,'Behörden','📄','Hangi belgeler gerekli?','Welche Unterlagen sind nötig?'),L(7,'Behörden','🏛️','Başvuru yapmak istiyorum.','Ich möchte einen Antrag stellen.'),L(7,'Behörden','📬','Sonuç ne zaman gelir?','Wann kommt das Ergebnis?'),
+L(7,'Diskussion','🗣️','Bu konuda farklı düşünüyorum.','Ich denke darüber anders.'),L(7,'Diskussion','📌','Asıl mesele şu.','Der eigentliche Punkt ist folgender.'),L(7,'Diskussion','⚖️','Avantajları ve dezavantajları var.','Es gibt Vor- und Nachteile.'),L(7,'Diskussion','🔍','Daha ayrıntılı açıklayabilir misiniz?','Können Sie das genauer erklären?'),
+L(8,'Fortgeschritten','🧩','Her ne kadar zor olsa da devam edeceğim.','Obwohl es schwierig ist, werde ich weitermachen.'),L(8,'Fortgeschritten','🔗','Bunun yanı sıra başka bir sorun daha var.','Darüber hinaus gibt es noch ein weiteres Problem.'),L(8,'Fortgeschritten','🧠','Sonuç olarak dikkatli karar vermek gerekir.','Daraus folgt, dass man sorgfältig entscheiden sollte.'),L(8,'Fortgeschritten','📝','Görüşümü birkaç nedenle açıklamak istiyorum.','Ich möchte meine Meinung aus mehreren Gründen erläutern.'),L(8,'Fortgeschritten','🤝','Ortak bir çözüm bulabileceğimizi düşünüyorum.','Ich denke, dass wir eine gemeinsame Lösung finden können.'),
+L(8,'Redewendungen','🐫','Devede kulak.','Nur ein Tropfen auf den heißen Stein.'),L(8,'Redewendungen','❤️','Gözüm tuttu.','Jemand/etwas gefällt mir auf Anhieb.'),L(8,'Redewendungen','🔥','İçi içine sığmamak.','Vor Aufregung kaum stillhalten können.'),L(8,'Redewendungen','🧂','Tuz biber ekmek.','Etwas noch verschlimmern.'),L(8,'Redewendungen','🪨','Taşın altına elini koymak.','Verantwortung übernehmen.')
+];
+const profileDefaults={derya:1,elif:2,adult:1};
+const state={profile:localStorage.getItem('ts_profile')||'derya',level:1,topic:'Alle',index:0,mode:'learn'};
+const $=id=>document.getElementById(id);
+function key(s){return `ts_${state.profile}_${s}`}
+function loadNum(s){return Number(localStorage.getItem(key(s))||0)}
+function saveNum(s,v){localStorage.setItem(key(s),v)}
+function maxLevelForProfile(){return state.profile==='derya'?3:8}
+function availableLevels(){return Array.from({length:maxLevelForProfile()},(_,i)=>i+1)}
+function items(){let arr=DATA.filter(x=>x.level===state.level);if(state.topic!=='Alle')arr=arr.filter(x=>x.topic===state.topic);if(state.mode==='review'){const wrong=JSON.parse(localStorage.getItem(key('wrongItems'))||'[]');arr=arr.filter(x=>wrong.includes(x.tr));}return arr.length?arr:DATA.filter(x=>x.level===state.level)}
+function topicsForLevel(){return ['Alle',...new Set(DATA.filter(x=>x.level===state.level).map(x=>x.topic))]}
+function setProfile(p){state.profile=p;state.level=Math.min(Number(localStorage.getItem(key('lastLevel'))||profileDefaults[p]),maxLevelForProfile());state.topic='Alle';state.index=0;renderAll()}
+function renderLevels(){const sel=$('levelSelect');sel.innerHTML='';availableLevels().forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=`Stufe ${l}`;sel.appendChild(o)});sel.value=state.level}
+function renderTopics(){const g=$('topicGrid');g.innerHTML='';topicsForLevel().forEach(t=>{const b=document.createElement('button');b.className='topic-btn '+(state.topic===t?'active':'');b.textContent=t;b.onclick=()=>{state.topic=t;state.index=0;renderTopics();renderLearn()};g.appendChild(b)})}
+function renderProfile(){['derya','elif','adult'].forEach(p=>$(p+'Btn').classList.toggle('active',state.profile===p));$('profileName').textContent='Profil: '+(state.profile==='derya'?'Derya':state.profile==='elif'?'Elif':'Erwachsene');$('stars').textContent=loadNum('stars');$('levelNo').textContent=state.level}
+function renderLearn(){const arr=items();state.index=Math.min(state.index,arr.length-1);const x=arr[state.index]||DATA[0];$('emoji').textContent=x.emoji;$('tr').textContent=x.tr;$('de').textContent=x.de;$('example').textContent=x.ex?`Beispiel: ${x.ex}`:'';$('levelBadge').textContent=`Stufe ${x.level} · ${x.topic}`;$('counter').textContent=`${state.index+1} / ${arr.length}`;$('progressBar').style.width=`${((state.index+1)/arr.length)*100}%`;$('playback').classList.add('hidden');$('msg').textContent='';saveNum('seen',Math.max(loadNum('seen'),state.index+1));renderStats()}
+function renderMode(){const m=state.mode;$('learnPanel').classList.toggle('hidden',m==='quiz'||m==='alphabet');$('quizPanel').classList.toggle('hidden',m!=='quiz');$('alphabetPanel').classList.toggle('hidden',m!=='alphabet');$('topicsPanel').classList.toggle('hidden',m==='alphabet');if(m==='quiz')makeQuiz();if(m==='alphabet')renderAlphabet();if(m==='review')renderLearn()}
+function renderAlphabet(){const g=$('alphabetGrid');g.innerHTML='';ALPHABET.forEach(([l,n])=>{const b=document.createElement('button');b.className='letter';b.innerHTML=`${l}<br><span class="small">${n}</span>`;b.onclick=()=>speakText(l);g.appendChild(b)})}
+function renderStats(){$('seenStat').textContent=loadNum('seen');$('correctStat').textContent=loadNum('correct');const wrong=JSON.parse(localStorage.getItem(key('wrongItems'))||'[]');$('wrongStat').textContent=wrong.length}
+function renderAll(){localStorage.setItem('ts_profile',state.profile);localStorage.setItem(key('lastLevel'),state.level);renderProfile();renderLevels();renderTopics();renderLearn();renderMode();renderStats()}
+function speakText(txt,rate){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='tr-TR';u.rate=rate|| (state.profile==='derya'?.7:.85);speechSynthesis.speak(u)}
+function current(){return items()[state.index]||DATA[0]}
+$('speakBtn').onclick=()=>speakText(current().tr);
+$('nextBtn').onclick=()=>{const arr=items();state.index=(state.index+1)%arr.length;saveNum('stars',loadNum('stars')+1);renderProfile();renderLearn()};
+$('recordBtn').onclick=async()=>{const msg=$('msg');msg.textContent='🎤 Sprich jetzt nach …';if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||typeof MediaRecorder==='undefined'){msg.textContent='Mikrofon/Aufnahme wird hier nicht unterstützt.';return}try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const rec=new MediaRecorder(stream),chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};rec.onstop=()=>{const blob=new Blob(chunks,{type:rec.mimeType});$('playback').src=URL.createObjectURL(blob);$('playback').classList.remove('hidden');msg.textContent='▶️ Hör dir deine Aussprache an!';stream.getTracks().forEach(t=>t.stop())};rec.start();setTimeout(()=>rec.state==='recording'&&rec.stop(),2800)}catch(e){msg.textContent='Bitte Mikrofon-Zugriff erlauben.'}};
+function markWrong(tr){const k=key('wrongItems');const a=JSON.parse(localStorage.getItem(k)||'[]');if(!a.includes(tr))a.push(tr);localStorage.setItem(k,JSON.stringify(a))}
+function clearWrong(tr){const k=key('wrongItems');let a=JSON.parse(localStorage.getItem(k)||'[]');a=a.filter(x=>x!==tr);localStorage.setItem(k,JSON.stringify(a))}
+function makeQuiz(){const arr=items();const x=arr[Math.floor(Math.random()*arr.length)]||DATA[0];$('quizQuestion').innerHTML=`Was bedeutet <b>${x.tr}</b>?`;let choices=[x.de];while(choices.length<4&&choices.length<arr.length){const y=arr[Math.floor(Math.random()*arr.length)].de;if(!choices.includes(y))choices.push(y)}choices.sort(()=>Math.random()-.5);const box=$('quizAnswers');box.innerHTML='';choices.forEach(c=>{const b=document.createElement('button');b.textContent=c;b.onclick=()=>{if(c===x.de){$('quizMsg').textContent='🎉 Richtig! +3 Sterne';saveNum('stars',loadNum('stars')+3);saveNum('correct',loadNum('correct')+1);clearWrong(x.tr)}else{$('quizMsg').textContent=`💛 Richtig wäre: ${x.de}`;markWrong(x.tr)}renderProfile();renderStats();setTimeout(makeQuiz,900)};box.appendChild(b)})}
+$('deryaBtn').onclick=()=>setProfile('derya');$('elifBtn').onclick=()=>setProfile('elif');$('adultBtn').onclick=()=>setProfile('adult');
+$('levelSelect').onchange=e=>{state.level=Number(e.target.value);state.topic='Alle';state.index=0;localStorage.setItem(key('lastLevel'),state.level);renderProfile();renderTopics();renderLearn();renderMode()};
+$('modeSelect').onchange=e=>{state.mode=e.target.value;renderMode()};
+$('reviewBtn').onclick=()=>{state.mode='review';$('modeSelect').value='review';state.topic='Alle';state.index=0;renderTopics();renderMode()};
+$('resetBtn').onclick=()=>{if(confirm('Fortschritt dieses Profils wirklich zurücksetzen?')){['stars','seen','correct','wrongItems','lastLevel'].forEach(s=>localStorage.removeItem(key(s)));state.level=profileDefaults[state.profile];state.topic='Alle';state.index=0;renderAll()}};
+state.level=Math.min(Number(localStorage.getItem(key('lastLevel'))||profileDefaults[state.profile]),maxLevelForProfile());renderAll();
+</script>
+</body></html>

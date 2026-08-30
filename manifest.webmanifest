@@ -1,0 +1,9 @@
+{
+  "name":"Türkisch mit Sternen",
+  "short_name":"Türkisch Sterne",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#fff8e8",
+  "theme_color":"#ffcf5a",
+  "lang":"de"
+}

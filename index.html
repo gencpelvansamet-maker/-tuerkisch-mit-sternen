@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ffcf5a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Türkisch Sterne">
+<link rel="manifest" href="manifest.webmanifest">
 <title>Türkisch mit Sternen</title>
 <style>
 :root{--bg:#fff8e8;--card:#fff;--ink:#253047;--accent:#ffcf5a;--green:#78d98b;--blue:#7bbcff;--pink:#ff9e9e;--soft:#ffe48b;--muted:#6a7486}
@@ -17,7 +21,7 @@ button,select{border:0;border-radius:16px;padding:13px 14px;font-size:16px;font-
 .learn-card{text-align:center}.emoji{font-size:64px}.word{font-size:38px;font-weight:800;color:#df4b4b}.translation{font-size:22px;margin:7px 0}.example{font-size:17px;color:var(--muted);min-height:22px}.badge{display:inline-block;background:#eef3ff;padding:6px 10px;border-radius:999px;font-size:13px;font-weight:700}
 .progress{height:12px;background:#eee;border-radius:999px;overflow:hidden}.progress>div{height:100%;background:#5ebd73;width:0}.small{font-size:13px;color:var(--muted)}
 .quiz button{display:block;width:100%;margin:8px 0}.hidden{display:none!important}.alphabet{display:grid;grid-template-columns:repeat(auto-fit,minmax(58px,1fr));gap:8px}.letter{padding:12px 8px;background:#fff;border-radius:14px;box-shadow:0 2px 8px #0001;text-align:center;font-weight:800}
-.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.stat{background:#f7f8fb;border-radius:15px;padding:10px}.footer-note{text-align:center;color:var(--muted);font-size:12px;padding:20px 5px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}.stat{background:#f7f8fb;border-radius:15px;padding:10px}.footer-note{text-align:center;color:var(--muted);font-size:12px;padding:20px 5px}.goal{background:#fff7d6;border-radius:18px;padding:12px;margin:12px 0}.goal-head{display:flex;justify-content:space-between;font-weight:800;margin-bottom:8px}.achievements{display:flex;gap:8px;overflow-x:auto;padding:3px 0}.achievement{min-width:118px;text-align:center;background:#f3f5f8;border-radius:15px;padding:10px;filter:grayscale(1);opacity:.55}.achievement.unlocked{background:#fff2b9;filter:none;opacity:1}.quiz-feedback{min-height:30px;font-weight:800;text-align:center}.quiz button.correct{background:var(--green)}.quiz button.wrong{background:var(--pink)}
 @media(max-width:520px){.word{font-size:34px}.emoji{font-size:58px}.stat-grid{grid-template-columns:1fr 1fr}.wrap{padding:10px}}
 </style>
 </head>
@@ -72,7 +76,9 @@ button,select{border:0;border-radius:16px;padding:13px 14px;font-size:16px;font-
 
   <div id="statsPanel" class="panel">
     <h3 class="section-title">Fortschritt</h3>
-    <div class="stat-grid"><div class="stat"><b id="seenStat">0</b><br><span class="small">gelernt</span></div><div class="stat"><b id="correctStat">0</b><br><span class="small">richtig</span></div><div class="stat"><b id="wrongStat">0</b><br><span class="small">wiederholen</span></div></div>
+    <div class="goal"><div class="goal-head"><span>🎯 Tagesziel</span><span id="goalText">0 / 10 Sterne</span></div><div class="progress"><div id="goalBar"></div></div></div>
+    <div class="stat-grid"><div class="stat"><b id="seenStat">0</b><br><span class="small">gelernt</span></div><div class="stat"><b id="correctStat">0</b><br><span class="small">richtig</span></div><div class="stat"><b id="wrongStat">0</b><br><span class="small">wiederholen</span></div><div class="stat"><b id="streakStat">0</b><br><span class="small">🔥 Tage</span></div></div>
+    <h4>Abzeichen</h4><div id="achievements" class="achievements"></div>
     <div class="row" style="margin-top:10px"><button class="ghost" id="reviewBtn">🔁 Fehler wiederholen</button><button class="ghost" id="resetBtn">♻️ Fortschritt zurücksetzen</button></div>
   </div>
 
@@ -116,6 +122,9 @@ const $=id=>document.getElementById(id);
 function key(s){return `ts_${state.profile}_${s}`}
 function loadNum(s){return Number(localStorage.getItem(key(s))||0)}
 function saveNum(s,v){localStorage.setItem(key(s),v)}
+function today(){return new Date().toISOString().slice(0,10)}
+function addStars(n){saveNum('stars',loadNum('stars')+n);const day=today(),last=localStorage.getItem(key('goalDay'));if(last!==day){localStorage.setItem(key('goalDay'),day);saveNum('dailyStars',0)}saveNum('dailyStars',loadNum('dailyStars')+n);updateStreak();renderProfile();renderStats()}
+function updateStreak(){const day=today(),last=localStorage.getItem(key('lastActive'));if(last===day)return;const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);saveNum('streak',last===yesterday?loadNum('streak')+1:1);localStorage.setItem(key('lastActive'),day)}
 function maxLevelForProfile(){return state.profile==='derya'?3:8}
 function availableLevels(){return Array.from({length:maxLevelForProfile()},(_,i)=>i+1)}
 function items(){let arr=DATA.filter(x=>x.level===state.level);if(state.topic!=='Alle')arr=arr.filter(x=>x.topic===state.topic);if(state.mode==='review'){const wrong=JSON.parse(localStorage.getItem(key('wrongItems'))||'[]');arr=arr.filter(x=>wrong.includes(x.tr));}return arr.length?arr:DATA.filter(x=>x.level===state.level)}
@@ -127,21 +136,22 @@ function renderProfile(){['derya','elif','adult'].forEach(p=>$(p+'Btn').classLis
 function renderLearn(){const arr=items();state.index=Math.min(state.index,arr.length-1);const x=arr[state.index]||DATA[0];$('emoji').textContent=x.emoji;$('tr').textContent=x.tr;$('de').textContent=x.de;$('example').textContent=x.ex?`Beispiel: ${x.ex}`:'';$('levelBadge').textContent=`Stufe ${x.level} · ${x.topic}`;$('counter').textContent=`${state.index+1} / ${arr.length}`;$('progressBar').style.width=`${((state.index+1)/arr.length)*100}%`;$('playback').classList.add('hidden');$('msg').textContent='';saveNum('seen',Math.max(loadNum('seen'),state.index+1));renderStats()}
 function renderMode(){const m=state.mode;$('learnPanel').classList.toggle('hidden',m==='quiz'||m==='alphabet');$('quizPanel').classList.toggle('hidden',m!=='quiz');$('alphabetPanel').classList.toggle('hidden',m!=='alphabet');$('topicsPanel').classList.toggle('hidden',m==='alphabet');if(m==='quiz')makeQuiz();if(m==='alphabet')renderAlphabet();if(m==='review')renderLearn()}
 function renderAlphabet(){const g=$('alphabetGrid');g.innerHTML='';ALPHABET.forEach(([l,n])=>{const b=document.createElement('button');b.className='letter';b.innerHTML=`${l}<br><span class="small">${n}</span>`;b.onclick=()=>speakText(l);g.appendChild(b)})}
-function renderStats(){$('seenStat').textContent=loadNum('seen');$('correctStat').textContent=loadNum('correct');const wrong=JSON.parse(localStorage.getItem(key('wrongItems'))||'[]');$('wrongStat').textContent=wrong.length}
+function renderStats(){$('seenStat').textContent=loadNum('seen');$('correctStat').textContent=loadNum('correct');const wrong=JSON.parse(localStorage.getItem(key('wrongItems'))||'[]');$('wrongStat').textContent=wrong.length;$('streakStat').textContent=loadNum('streak');const dayStars=localStorage.getItem(key('goalDay'))===today()?loadNum('dailyStars'):0;$('goalText').textContent=`${Math.min(dayStars,10)} / 10 Sterne`;$('goalBar').style.width=`${Math.min(dayStars*10,100)}%`;const badges=[['🌱','Erster Schritt',loadNum('seen')>=1],['⭐','Sternensammler',loadNum('stars')>=25],['🎯','Quiz-Profi',loadNum('correct')>=10],['🔥','Lernserie',loadNum('streak')>=3]];$('achievements').innerHTML=badges.map(([icon,name,on])=>`<div class="achievement ${on?'unlocked':''}"><div style="font-size:28px">${icon}</div><b>${name}</b><div class="small">${on?'Geschafft!':'Noch gesperrt'}</div></div>`).join('')}
 function renderAll(){localStorage.setItem('ts_profile',state.profile);localStorage.setItem(key('lastLevel'),state.level);renderProfile();renderLevels();renderTopics();renderLearn();renderMode();renderStats()}
 function speakText(txt,rate){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='tr-TR';u.rate=rate|| (state.profile==='derya'?.7:.85);speechSynthesis.speak(u)}
 function current(){return items()[state.index]||DATA[0]}
 $('speakBtn').onclick=()=>speakText(current().tr);
-$('nextBtn').onclick=()=>{const arr=items();state.index=(state.index+1)%arr.length;saveNum('stars',loadNum('stars')+1);renderProfile();renderLearn()};
+$('nextBtn').onclick=()=>{const arr=items();state.index=(state.index+1)%arr.length;addStars(1);renderLearn()};
 $('recordBtn').onclick=async()=>{const msg=$('msg');msg.textContent='🎤 Sprich jetzt nach …';if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||typeof MediaRecorder==='undefined'){msg.textContent='Mikrofon/Aufnahme wird hier nicht unterstützt.';return}try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});const rec=new MediaRecorder(stream),chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};rec.onstop=()=>{const blob=new Blob(chunks,{type:rec.mimeType});$('playback').src=URL.createObjectURL(blob);$('playback').classList.remove('hidden');msg.textContent='▶️ Hör dir deine Aussprache an!';stream.getTracks().forEach(t=>t.stop())};rec.start();setTimeout(()=>rec.state==='recording'&&rec.stop(),2800)}catch(e){msg.textContent='Bitte Mikrofon-Zugriff erlauben.'}};
 function markWrong(tr){const k=key('wrongItems');const a=JSON.parse(localStorage.getItem(k)||'[]');if(!a.includes(tr))a.push(tr);localStorage.setItem(k,JSON.stringify(a))}
 function clearWrong(tr){const k=key('wrongItems');let a=JSON.parse(localStorage.getItem(k)||'[]');a=a.filter(x=>x!==tr);localStorage.setItem(k,JSON.stringify(a))}
-function makeQuiz(){const arr=items();const x=arr[Math.floor(Math.random()*arr.length)]||DATA[0];$('quizQuestion').innerHTML=`Was bedeutet <b>${x.tr}</b>?`;let choices=[x.de];while(choices.length<4&&choices.length<arr.length){const y=arr[Math.floor(Math.random()*arr.length)].de;if(!choices.includes(y))choices.push(y)}choices.sort(()=>Math.random()-.5);const box=$('quizAnswers');box.innerHTML='';choices.forEach(c=>{const b=document.createElement('button');b.textContent=c;b.onclick=()=>{if(c===x.de){$('quizMsg').textContent='🎉 Richtig! +3 Sterne';saveNum('stars',loadNum('stars')+3);saveNum('correct',loadNum('correct')+1);clearWrong(x.tr)}else{$('quizMsg').textContent=`💛 Richtig wäre: ${x.de}`;markWrong(x.tr)}renderProfile();renderStats();setTimeout(makeQuiz,900)};box.appendChild(b)})}
+function makeQuiz(){const arr=items();const pool=DATA.filter(y=>y.level===state.level);const x=arr[Math.floor(Math.random()*arr.length)]||DATA[0];$('quizQuestion').innerHTML=`Was bedeutet <b>${x.tr}</b>?`;$('quizMsg').textContent='';let choices=[x.de];while(choices.length<Math.min(4,pool.length)){const y=pool[Math.floor(Math.random()*pool.length)].de;if(!choices.includes(y))choices.push(y)}choices.sort(()=>Math.random()-.5);const box=$('quizAnswers');box.innerHTML='';choices.forEach(c=>{const b=document.createElement('button');b.textContent=c;b.onclick=()=>{[...box.children].forEach(btn=>btn.disabled=true);if(c===x.de){b.classList.add('correct');$('quizMsg').textContent='🎉 Richtig! +3 Sterne';addStars(3);saveNum('correct',loadNum('correct')+1);clearWrong(x.tr)}else{b.classList.add('wrong');[...box.children].find(btn=>btn.textContent===x.de)?.classList.add('correct');$('quizMsg').textContent=`💛 Richtig wäre: ${x.de}`;markWrong(x.tr)}renderStats();setTimeout(makeQuiz,1400)};box.appendChild(b)})}
 $('deryaBtn').onclick=()=>setProfile('derya');$('elifBtn').onclick=()=>setProfile('elif');$('adultBtn').onclick=()=>setProfile('adult');
 $('levelSelect').onchange=e=>{state.level=Number(e.target.value);state.topic='Alle';state.index=0;localStorage.setItem(key('lastLevel'),state.level);renderProfile();renderTopics();renderLearn();renderMode()};
 $('modeSelect').onchange=e=>{state.mode=e.target.value;renderMode()};
 $('reviewBtn').onclick=()=>{state.mode='review';$('modeSelect').value='review';state.topic='Alle';state.index=0;renderTopics();renderMode()};
-$('resetBtn').onclick=()=>{if(confirm('Fortschritt dieses Profils wirklich zurücksetzen?')){['stars','seen','correct','wrongItems','lastLevel'].forEach(s=>localStorage.removeItem(key(s)));state.level=profileDefaults[state.profile];state.topic='Alle';state.index=0;renderAll()}};
+$('resetBtn').onclick=()=>{if(confirm('Fortschritt dieses Profils wirklich zurücksetzen?')){['stars','seen','correct','wrongItems','lastLevel','streak','lastActive','dailyStars','goalDay'].forEach(s=>localStorage.removeItem(key(s)));state.level=profileDefaults[state.profile];state.topic='Alle';state.index=0;renderAll()}};
 state.level=Math.min(Number(localStorage.getItem(key('lastLevel'))||profileDefaults[state.profile]),maxLevelForProfile());renderAll();
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));
 </script>
 </body></html>

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Türkisch mit Sternen</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fff8e8;margin:0;text-align:center;color:#253047}
+header{background:#ffcf5a;padding:22px 12px}
+h1{margin:0;font-size:28px}
+main{max-width:650px;margin:auto;padding:18px}
+button{border:0;border-radius:18px;padding:15px;margin:6px;font-size:17px;font-weight:700;background:#fff;box-shadow:0 3px 10px #0002}
+.profile{background:#ffe48b}
+.active{outline:4px solid #5ebd73}
+.card{background:white;border-radius:24px;padding:25px 15px;margin:20px 0;box-shadow:0 5px 18px #0002}
+.word{font-size:38px;font-weight:800;color:#df4b4b}
+.german{font-size:22px;margin:8px}
+.emoji{font-size:65px}
+.star{font-size:22px}
+.action{background:#78d98b}
+.mic{background:#ff9e9e}
+.next{background:#7bbcff}
+.quiz button{display:block;width:90%;margin:10px auto}
+#msg{font-weight:bold;font-size:19px;min-height:25px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>⭐ Türkisch mit Sternen ⭐</h1>
+<div class="star">Gesammelte Sterne: ⭐ <span id="stars">0</span></div>
+</header>
+
+<main>
+
+<div>
+<button id="derya" class="profile">🧸 Derya</button>
+<button id="elif" class="profile">🌟 Elif</button>
+</div>
+
+<div class="card">
+<div class="emoji" id="emoji">👋</div>
+<div class="word" id="tr">Merhaba</div>
+<div class="german" id="de">Hallo</div>
+
+<button class="action" onclick="speak()">🔊 Anhören</button>
+<button class="mic" onclick="record()">🎤 Nachsprechen</button>
+<button class="next" onclick="nextWord()">➡️ Nächstes Wort</button>
+
+<p id="msg"></p>
+
+<audio id="playback" controls style="display:none;width:100%;margin-top:12px"></audio>
+</div>
+
+<div class="card quiz">
+<h2>🎯 Mini-Quiz</h2>
+<p>Was bedeutet <b id="question">Merhaba</b>?</p>
+<div id="answers"></div>
+</div>
+
+</main>
+
+<script>
+const words=[
+["👋","Merhaba","Hallo"],
+["😊","Nasılsın?","Wie geht es dir?"],
+["🙏","Teşekkürler","Danke"],
+["👋","Güle güle","Tschüss"],
+["☀️","Günaydın","Guten Morgen"],
+["🌙","İyi geceler","Gute Nacht"],
+["1️⃣","Bir","Eins"],
+["2️⃣","İki","Zwei"],
+["3️⃣","Üç","Drei"],
+["4️⃣","Dört","Vier"],
+["5️⃣","Beş","Fünf"],
+["🔴","Kırmızı","Rot"],
+["🔵","Mavi","Blau"],
+["🟢","Yeşil","Grün"],
+["🟡","Sarı","Gelb"],
+["🐱","Kedi","Katze"],
+["🐶","Köpek","Hund"],
+["🐦","Kuş","Vogel"],
+["🐟","Balık","Fisch"],
+["👩","Anne","Mama"],
+["👨","Baba","Papa"],
+["👧","Kız","Mädchen"],
+["👦","Erkek çocuk","Junge"],
+["🍎","Elma","Apfel"],
+["🍞","Ekmek","Brot"],
+["💧","Su","Wasser"],
+["🥛","Süt","Milch"],
+["🏫","Okul","Schule"],
+["📚","Kitap","Buch"],
+["✏️","Kalem","Stift"],
+["👁️","Göz","Auge"],
+["👃","Burun","Nase"],
+["👄","Ağız","Mund"],
+["✋","El","Hand"]
+];
+
+let i=0;
+let profile=localStorage.getItem("profile")||"derya";
+let stars=Number(localStorage.getItem("stars_"+profile)||0);
+
+const $=x=>document.getElementById(x);
+
+function save(){
+ localStorage.setItem("profile",profile);
+ localStorage.setItem("stars_"+profile,stars);
+}
+
+function profileUI(){
+ $("derya").classList.toggle("active",profile==="derya");
+ $("elif").classList.toggle("active",profile==="elif");
+ stars=Number(localStorage.getItem("stars_"+profile)||0);
+ $("stars").textContent=stars;
+}
+
+$("derya").onclick=()=>{profile="derya";save();profileUI();};
+$("elif").onclick=()=>{profile="elif";save();profileUI();};
+
+function show(){
+ let w=words[i];
+ $("emoji").textContent=w[0];
+ $("tr").textContent=w[1];
+ $("de").textContent=w[2];
+ $("msg").textContent="";
+ makeQuiz();
+}
+
+function speak(){
+ speechSynthesis.cancel();
+ let u=new SpeechSynthesisUtterance(words[i][1]);
+ u.lang="tr-TR";
+ u.rate=profile==="derya"?.72:.85;
+ speechSynthesis.speak(u);
+}
+
+function nextWord(){
+ i=(i+1)%words.length;
+ stars++;
+ save();
+ $("stars").textContent=stars;
+ show();
+}
+
+async function record(){
+ $("msg").textContent="🎤 Sprich das Wort jetzt nach …";
+
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+  $("msg").textContent="Mikrofon wird hier nicht unterstützt.";
+  return;
+ }
+
+ try{
+  const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  const rec=new MediaRecorder(stream);
+  let chunks=[];
+
+  rec.ondataavailable=e=>chunks.push(e.data);
+
+  rec.onstop=()=>{
+   const blob=new Blob(chunks,{type:rec.mimeType});
+   $("playback").src=URL.createObjectURL(blob);
+   $("playback").style.display="block";
+   $("msg").textContent="▶️ Hör dir deine Aussprache an!";
+   stream.getTracks().forEach(t=>t.stop());
+  };
+
+  rec.start();
+  setTimeout(()=>rec.stop(),2800);
+
+ }catch(e){
+  $("msg").textContent="Bitte Mikrofon-Zugriff erlauben.";
+ }
+}
+
+function makeQuiz(){
+ const correct=words[i][2];
+ $("question").textContent=words[i][1];
+
+ let choices=[correct];
+
+ while(choices.length<3){
+  let x=words[Math.floor(Math.random()*words.length)][2];
+  if(!choices.includes(x))choices.push(x);
+ }
+
+ choices.sort(()=>Math.random()-.5);
+
+ $("answers").innerHTML="";
+
+ choices.forEach(x=>{
+  let b=document.createElement("button");
+  b.textContent=x;
+
+  b.onclick=()=>{
+   if(x===correct){
+    $("msg").textContent="🎉 Richtig! +3 Sterne";
+    stars+=3;
+    save();
+    $("stars").textContent=stars;
+   }else{
+    $("msg").textContent="💛 Versuch es noch einmal.";
+   }
+  };
+
+  $("answers").appendChild(b);
+ });
+}
+
+profileUI();
+show();
+</script>
+
+</body>
+</html>
